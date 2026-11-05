@@ -1,0 +1,41 @@
+name: Validate contributor profiles
+
+on:
+  pull_request:
+    paths:
+      - "contributors/**"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure contributor profile files are present and non-empty
+        shell: bash
+        run: |
+          shopt -s nullglob
+          profiles=(contributors/*.md)
+          valid_count=0
+
+          for file in "${profiles[@]}"; do
+            if [[ "$file" == "contributors/_template.md" ]]; then
+              continue
+            fi
+            if [[ ! -s "$file" ]]; then
+              echo "Profile file is empty: $file"
+              exit 1
+            fi
+            valid_count=$((valid_count + 1))
+          done
+
+          if [[ "$valid_count" -eq 0 ]]; then
+            echo "No contributor profile was found in contributors/."
+            exit 1
+          fi
+
+          echo "Found $valid_count non-empty contributor profile(s)."
